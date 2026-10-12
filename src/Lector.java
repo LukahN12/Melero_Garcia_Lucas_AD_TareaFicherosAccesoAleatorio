@@ -1,3 +1,5 @@
+import org.iesalandalus.programacion.utilidades.Entrada;
+
 import java.io.*;
 
 
@@ -5,15 +7,15 @@ public class Lector {
 
     static RandomAccessFile aleatorio;
     static final int LONGITUD_REGISTRO = 64;
+    // Clase :
+    // File fiche = new File("C:\\Users\\usuario\\Documents\\proyectoAleatorios\\AleatorioDepart.dat");
+    // Casa:
+    File fiche = new File("C:\\Users\\neon2\\Documents\\FicherosAleatorios\\AleatorioDepart.dat");
 
 
     public void main(String[] args) throws IOException {
-        // Clase :
-        File fiche = new File("C:\\Users\\usuario\\Documents\\proyectoAleatorios\\AleatorioDepart.dat");
-        // Casa:
-        //File fiche = new File("C:\\Users\\neon2\\Documents\\FicherosAleatorios\\AleatorioDepart.dat");
         if (fiche.exists()) {
-            System.out.println("Se va a proceder a borrar el fichero AleatorioEmpleados.dat ya que existe");
+            System.out.println("Se va a proceder a borrar el fichero AleatorioDepart.dat ya que existe");
             fiche.delete();
         }
         try {
@@ -23,19 +25,30 @@ public class Lector {
         }
         insertaDepartamento((short) 150, "Manue", "Madry", (short) 3);
         System.out.println("---");
-
-//        consultaDepartamento(150);
-//        System.out.println(" ");
-//        System.out.println("---");
-//        consultaDepartamento(2);
+        consultaDepartamento(150);
+        System.out.println(" ");
         System.out.println("---");
-        inspeccionFisica();
+        insertaDepartamento((short) 75, "Pepe", "Alicante", (short) 3);
+        System.out.println(" ");
+        System.out.println("---");
+        consultaDepartamento(75);
+        consultaDepartamento(73);
+
+//        System.out.println("---");
+//        inspeccionFisica();
 
         // listadoDepartamentos();
     }
 
     public void insertaDepartamento(short identificador, String nombre, String localidad, short empleados) throws IOException {
-        if (!existeDepartamento(identificador)) {
+        boolean valido = true;
+        if (existeDepartamento(identificador)) {
+            do {
+                System.out.print("¿Estas seguro que quieres sobreescribir (Y / N)? ");
+            }while (!Entrada.cadena().equalsIgnoreCase("y")&&!Entrada.cadena().equalsIgnoreCase("n"));
+        }
+
+        if (valido) {
             long posicion = (identificador - 1) * LONGITUD_REGISTRO;
             aleatorio.seek(posicion);
             aleatorio.writeShort(identificador);
@@ -51,7 +64,7 @@ public class Lector {
             String LOCALIDAD = "---------------";
             short EMPLEADOS = 0;
             do {
-                posicion = (identificador - ( i + 1 )) * LONGITUD_REGISTRO;
+                posicion = (identificador - (i + 1)) * LONGITUD_REGISTRO;
                 aleatorio.seek(posicion);
                 aleatorio.writeShort(0);
                 StringBuffer Nombrebuffer = new StringBuffer(NOMBRE);
@@ -62,7 +75,7 @@ public class Lector {
                 aleatorio.writeChars(Localidadbuffer.toString());
                 aleatorio.writeShort(EMPLEADOS);
                 i++;
-            } while (!existeDepartamento(identificador-i));
+            } while (!existeDepartamento(identificador - i));
         }
     }
 
@@ -73,7 +86,6 @@ public class Lector {
                 long posicion = (id - 1) * LONGITUD_REGISTRO;
                 aleatorio.seek(posicion);
                 long idBuscado = ( aleatorio.getFilePointer() / 64 ) + 1;
-                System.out.println("Estoy buscando el registro: " + idBuscado);
                 if (idBuscado == id || idBuscado == 0) {
                     short idResultado = aleatorio.readShort();
                     char[] nombre = new char[15];
@@ -89,8 +101,7 @@ public class Lector {
 
                     short empleados = aleatorio.readShort();
 
-                    System.out.printf("ID: %d, Nombre: %s, Localidad: %s, Empleados: %d", idResultado, nombreS, localidadS, empleados);
-                    System.out.println(" ");
+                    System.out.printf("ID: %d, Nombre: %s, Localidad: %s, Empleados: %d \n", idResultado, nombreS, localidadS, empleados);
                 } else {
                     System.out.printf("ID: %d,DA ERROR.%n", id);
                 }
@@ -110,7 +121,6 @@ public class Lector {
                 long posicion = (long) (id - 1) * LONGITUD_REGISTRO;
                 aleatorio.seek(posicion);
                 long idBuscado = ( aleatorio.getFilePointer() / 64 ) + 1;
-                System.out.println("Estoy buscando el registro: " + idBuscado);
                 if (idBuscado == id || idBuscado == 0) {
                     short idResultado = aleatorio.readShort();
                     char[] nombre = new char[15];
@@ -126,7 +136,7 @@ public class Lector {
 
                     short empleados = aleatorio.readShort();
 
-                    System.out.printf("ID: %d, Nombre: %s, Localidad: %s, Empleados: %d", idResultado, nombreS, localidadS, empleados);
+                    System.out.printf("ID: %d, Nombre: %s, Localidad: %s, Empleados: %d \n", idResultado, nombreS, localidadS, empleados);
 
                 } else {
                     System.out.printf("ID: %d,DA ERROR.%n", id);
@@ -145,22 +155,43 @@ public class Lector {
         long posicion = (id - 1) * LONGITUD_REGISTRO;
         try {
             resultado = posicion < aleatorio.length();
-            if (!resultado) {
-                System.out.printf("ID: %d, NO EXISTE.%n", id);
-            } else {
+            if (resultado) {
                 aleatorio.seek(posicion);
                 int identificador = aleatorio.readInt();
                 resultado = identificador > 0;
-                switch (identificador){
-                    case 0 -> System.out.printf("ID: %d, Posición inicializada pero no usada%n",id);
-                    case -1 -> System.out.printf("ID: %d, Registro Eliminado%n",id);
-                    default -> System.out.printf("ID: %d, Registro Valido%n",id);
-                }
             }
         }catch (IOException e) {
             System.out.println("Se ha alcanzado el extremo del fichero.");
         }
 
         return resultado;
+    }
+
+    public void eliminaDepartamento(int id) throws FileNotFoundException {
+        if(existeDepartamento(id)){
+            long posicion = (id - 1) * LONGITUD_REGISTRO;
+            try {
+                aleatorio.seek(posicion);
+                do {
+                    System.out.print("CONFIRMA LA OPERACIÓN DE BORRADO ( Y / N ) ");
+                }while (!Entrada.cadena().equalsIgnoreCase("y")&&!Entrada.cadena().equalsIgnoreCase("n"));
+
+                char Respuesta = Entrada.caracter();
+                if (Respuesta == 'Y'){
+                    aleatorio.writeShort(-1);
+                    StringBuffer nombres = new StringBuffer("***************");
+                    nombres.setLength(15);
+                    aleatorio.writeChars(nombres.toString());
+                    StringBuffer localidades = new StringBuffer("***************");
+                    localidades.setLength(15);
+                    aleatorio.writeChars(localidades.toString());
+                    aleatorio.writeShort(-1);
+                } else {
+                    System.out.println("Operación cancelada");
+                }
+            }catch (IOException e) {
+                System.out.println("Se ha alcanzado el extremo del fichero.");
+            }
+        }
     }
 }
