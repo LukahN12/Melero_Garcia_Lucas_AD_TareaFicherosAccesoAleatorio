@@ -1,6 +1,7 @@
 import org.iesalandalus.programacion.utilidades.Entrada;
 
 import java.io.*;
+import java.util.Locale;
 
 
 public class Lector {
@@ -14,30 +15,190 @@ public class Lector {
 
 
     public void main(String[] args) throws IOException {
-        if (fiche.exists()) {
-            System.out.println("Se va a proceder a borrar el fichero AleatorioDepart.dat ya que existe");
-            fiche.delete();
+        if (integrador()){
+            try {
+                aleatorio = new RandomAccessFile(fiche, "rw");
+            } catch (IOException e) {
+                System.out.println("IOException");
+            }
+            insertaDepartamento((short) 2, "Manue", "Madry", (short) 3);
+            System.out.println("---");
+            consultaDepartamento(2);
+            System.out.println(" ");
+            System.out.println("---");
+            insertaDepartamento((short) 3, "Pepe", "Alicante", (short) 8);
+            System.out.println(" ");
+            System.out.println("---");
+            consultaDepartamento(3);
+            consultaDepartamento(1);
+
+            System.out.println("---");
+            actualizaNumeroEmpleados((short) 2, (short) 1);
+            System.out.println("---");
+            consultaDepartamento(2);
+
+            System.out.println("---");
+            eliminaDepartamento(3);
+            System.out.println("---");
+            consultaDepartamento(3);
+            System.out.println("---");
+            estadisticas();
+            // inspeccionFisica();
         }
+    }
+
+    public void menu(){
+
+    }
+
+    public boolean integrador(){
+        boolean resultado = true;
+
         try {
-            aleatorio = new RandomAccessFile(fiche, "rw");
-        } catch (IOException e) {
-            System.out.println("IOException");
+            if (aleatorio.length() % 64 != 0){
+                resultado = false;
+                System.out.println("La longitud no es multiplo de 64");
+            }
+
+            long id = 1;
+            short numeroDepartamento;
+            int departamentosActivos = 0;
+            int departamentosInicializados = 0;
+            int departamentosEliminados = 0;
+            int totalEmpleados = 0;
+
+            do {
+                try {
+                    long posicion = (id - 1) * LONGITUD_REGISTRO;
+                    aleatorio.seek(posicion);
+                    numeroDepartamento = aleatorio.readShort();
+                    System.out.printf("%d | %d\n", numeroDepartamento,id);
+                    if (numeroDepartamento > 0) {
+                        departamentosActivos++;
+                        aleatorio.seek(posicion);
+                        short idResultado = aleatorio.readShort();
+                        if (id != idResultado){
+                            resultado = false;
+                            System.out.println("Valores incongruentes de identificador positivo");
+                        }
+
+                        char[] nombre = new char[15];
+                        for (int i = 0; i < nombre.length; i++) {
+                            nombre[i] = aleatorio.readChar();
+                        }
+                        String nombreS = new String(nombre).trim();// Para esquipear bites
+
+                        if (nombreS.isBlank() || nombreS.isEmpty()){
+                            resultado = false;
+                            System.out.println("Nombre vacio en un registro activo");
+                        }
+
+                        char[] localidad = new char[15];
+                        for (int i = 0; i < localidad.length; i++) {
+                            localidad[i] = aleatorio.readChar();
+                        }
+                        String localidadS = new String(localidad).trim();// Para esquipear bites
+
+                        if (localidadS.isBlank() || localidadS.isEmpty()){
+                            resultado = false;
+                            System.out.println("Localidad vacia en un registro activo");
+                        }
+
+                        short empleados = aleatorio.readShort();
+
+                        if (empleados < 0){
+                            resultado = false;
+                            System.out.println("Empleados negativos en un registro activo");
+                        }
+
+
+                    }
+
+                    if (numeroDepartamento > -1){
+                        resultado = false;
+                        System.out.println("Valores de negativo inferiores a -1");
+
+                    }
+
+                    if (numeroDepartamento == -1){
+                        aleatorio.seek(posicion);
+                        short idResultado = aleatorio.readShort();
+
+                        char[] nombre = new char[15];
+                        for (int i = 0; i < nombre.length; i++) {
+                            nombre[i] = aleatorio.readChar();
+                        }
+                        String nombreS = new String(nombre).trim();// Para esquipear bites
+
+                        if (!nombreS.equals("---------------")){
+                            resultado = false;
+                            System.out.println("Formato incorrecto en nombre vacio");
+                        }
+
+                        char[] localidad = new char[15];
+                        for (int i = 0; i < localidad.length; i++) {
+                            localidad[i] = aleatorio.readChar();
+                        }
+                        String localidadS = new String(localidad).trim();// Para esquipear bites
+
+                        if (!localidadS.equals("---------------")){
+                            resultado = false;
+                            System.out.println("Formato incorrecto en localidad vacia");
+                        }
+
+                        short empleados = aleatorio.readShort();
+                    }
+
+                    if (numeroDepartamento == 0){
+                        departamentosInicializados++;
+
+                        aleatorio.seek(posicion);
+                        short idResultado = aleatorio.readShort();
+
+                        char[] nombre = new char[15];
+                        for (int i = 0; i < nombre.length; i++) {
+                            nombre[i] = aleatorio.readChar();
+                        }
+                        String nombreS = new String(nombre).trim();// Para esquipear bites
+
+                        if (!nombreS.equals("***************")){
+                            resultado = false;
+                            System.out.println("Formato incorrecto en nombre borrada");
+                        }
+
+                        char[] localidad = new char[15];
+                        for (int i = 0; i < localidad.length; i++) {
+                            localidad[i] = aleatorio.readChar();
+                        }
+                        String localidadS = new String(localidad).trim();// Para esquipear bites
+
+                        if (!localidadS.equals("***************")){
+                            resultado = false;
+                            System.out.println("Formato incorrecto en localidad borrada");
+                        }
+
+                        short empleados = aleatorio.readShort();
+
+                    }
+                } catch (FileNotFoundException e) {
+                    System.out.println("El fichero no ha sido encontrado.");
+                } catch (IllegalArgumentException e) {
+                    System.out.println("El modo de lectura escritura del fichero no es correcto.");
+                } catch (IOException e) {
+                    System.out.println("Se ha producido un error de E/S en el fichero o la posición indicada no es la correcta. (Estadistico) ");
+                }
+                id++;
+            } while (existeDepartamento(id) && resultado);
+            System.out.printf("Posiciones activas: %d \nPosiciones Inicializadas: %d \nPosiciones Eliminadas: %d \n",departamentosActivos,departamentosInicializados, departamentosEliminados);
+            double porcentaje = ((double) departamentosActivos / (departamentosEliminados + departamentosInicializados)) * 100 ;
+            System.out.println("Ratio de ocupación: " + porcentaje + "%");
+            System.out.println("El total de empleados activos son: " + totalEmpleados);
+        }catch (IOException e){
+            System.out.println("Error de E/S en el integrador");
         }
-        insertaDepartamento((short) 150, "Manue", "Madry", (short) 3);
-        System.out.println("---");
-        consultaDepartamento(150);
-        System.out.println(" ");
-        System.out.println("---");
-        insertaDepartamento((short) 75, "Pepe", "Alicante", (short) 3);
-        System.out.println(" ");
-        System.out.println("---");
-        consultaDepartamento(75);
-        consultaDepartamento(73);
 
-//        System.out.println("---");
-//        inspeccionFisica();
 
-        // listadoDepartamentos();
+        return resultado;
     }
 
     public void insertaDepartamento(short identificador, String nombre, String localidad, short empleados) throws IOException {
@@ -79,68 +240,37 @@ public class Lector {
         }
     }
 
-    public void inspeccionFisica() throws IOException {
+    public void inspeccionFisica() {
         long id = 1;
         do {
-            try {
-                long posicion = (id - 1) * LONGITUD_REGISTRO;
-                aleatorio.seek(posicion);
-                long idBuscado = ( aleatorio.getFilePointer() / 64 ) + 1;
-                if (idBuscado == id || idBuscado == 0) {
-                    short idResultado = aleatorio.readShort();
-                    char[] nombre = new char[15];
-                    for (int i = 0; i < nombre.length; i++) {
-                        nombre[i] = aleatorio.readChar();
-                    }
-                    String nombreS = new String(nombre).trim();// convierto a String el array
-                    char[] localidad = new char[15];
-                    for (int i = 0; i < localidad.length; i++) {
-                        localidad[i] = aleatorio.readChar();
-                    }
-                    String localidadS = new String(localidad).trim();// convierto a String el array
-
-                    short empleados = aleatorio.readShort();
-
-                    System.out.printf("ID: %d, Nombre: %s, Localidad: %s, Empleados: %d \n", idResultado, nombreS, localidadS, empleados);
-                } else {
-                    System.out.printf("ID: %d,DA ERROR.%n", id);
-                }
-            } catch (FileNotFoundException e) {
-                System.out.println("El fichero no ha sido encontrado.");
-            } catch (IllegalArgumentException e) {
-                System.out.println("El modo de lectura escritura del fichero no es correcto.");
-            } catch (IOException e) {
-                System.out.println("Se ha producido un error de E/S en el fichero o la posición indicada no es la correcta.");
-            }
+            consultaDepartamento(id);
             id++;
         } while (existeDepartamento((int) id));
     }
 
-    public void consultaDepartamento(int id) {
+    public void consultaDepartamento(long id) {
             try {
-                long posicion = (long) (id - 1) * LONGITUD_REGISTRO;
+                long posicion = (id - 1) * LONGITUD_REGISTRO;
                 aleatorio.seek(posicion);
-                long idBuscado = ( aleatorio.getFilePointer() / 64 ) + 1;
-                if (idBuscado == id || idBuscado == 0) {
-                    short idResultado = aleatorio.readShort();
-                    char[] nombre = new char[15];
-                    for (int i = 0; i < nombre.length; i++) {
-                        nombre[i] = aleatorio.readChar();
-                    }
-                    String nombreS = new String(nombre).trim();// convierto a String el array
-                    char[] localidad = new char[15];
-                    for (int i = 0; i < localidad.length; i++) {
-                        localidad[i] = aleatorio.readChar();
-                    }
-                    String localidadS = new String(localidad).trim();// convierto a String el array
 
-                    short empleados = aleatorio.readShort();
+                short idResultado = aleatorio.readShort();
 
-                    System.out.printf("ID: %d, Nombre: %s, Localidad: %s, Empleados: %d \n", idResultado, nombreS, localidadS, empleados);
-
-                } else {
-                    System.out.printf("ID: %d,DA ERROR.%n", id);
+                char[] nombre = new char[15];
+                for (int i = 0; i < nombre.length; i++) {
+                    nombre[i] = aleatorio.readChar();
                 }
+                String nombreS = new String(nombre).trim();// convierto a String el array
+
+                char[] localidad = new char[15];
+                for (int i = 0; i < localidad.length; i++) {
+                    localidad[i] = aleatorio.readChar();
+                }
+                String localidadS = new String(localidad).trim();// convierto a String el array
+
+                short empleados = aleatorio.readShort();
+
+                System.out.printf("ID: %d, Nombre: %s, Localidad: %s, Empleados: %d \n", idResultado, nombreS, localidadS, empleados);
+
             } catch (FileNotFoundException e) {
                 System.out.println("El fichero no ha sido encontrado.");
             } catch (IllegalArgumentException e) {
@@ -150,15 +280,15 @@ public class Lector {
             }
     }
 
-    public boolean existeDepartamento(int id){
-        boolean resultado = false;
+    public boolean existeDepartamento(long id){
+        boolean resultado = true;
         long posicion = (id - 1) * LONGITUD_REGISTRO;
         try {
             resultado = posicion < aleatorio.length();
             if (resultado) {
                 aleatorio.seek(posicion);
                 int identificador = aleatorio.readInt();
-                resultado = identificador > 0;
+                resultado = identificador != 0;
             }
         }catch (IOException e) {
             System.out.println("Se ha alcanzado el extremo del fichero.");
@@ -167,17 +297,18 @@ public class Lector {
         return resultado;
     }
 
-    public void eliminaDepartamento(int id) throws FileNotFoundException {
+    public void eliminaDepartamento(int id) {
         if(existeDepartamento(id)){
             long posicion = (id - 1) * LONGITUD_REGISTRO;
             try {
+                String respuesta;
                 aleatorio.seek(posicion);
                 do {
                     System.out.print("CONFIRMA LA OPERACIÓN DE BORRADO ( Y / N ) ");
-                }while (!Entrada.cadena().equalsIgnoreCase("y")&&!Entrada.cadena().equalsIgnoreCase("n"));
+                    respuesta =  Entrada.cadena().toLowerCase(Locale.ROOT);
+                }while (!respuesta.equalsIgnoreCase("y")&&!respuesta.equalsIgnoreCase("n"));
 
-                char Respuesta = Entrada.caracter();
-                if (Respuesta == 'Y'){
+                if (respuesta.equalsIgnoreCase("y")){
                     aleatorio.writeShort(-1);
                     StringBuffer nombres = new StringBuffer("***************");
                     nombres.setLength(15);
@@ -194,4 +325,129 @@ public class Lector {
             }
         }
     }
+
+    public void actualizaNumeroEmpleados(short numDepartamento, short nuevoEmpleado){
+        if(existeDepartamento(numDepartamento)){
+            long posicion = (numDepartamento - 1) * LONGITUD_REGISTRO;
+            try {
+                String respuesta;
+                aleatorio.seek(posicion);
+                do {
+                    System.out.print("CONFIRMA LA OPERACIÓN DE EDICIÓN ( Y / N ) ");
+                    respuesta =  Entrada.cadena().toLowerCase(Locale.ROOT);
+                }while (!respuesta.equalsIgnoreCase("y")&&!respuesta.equalsIgnoreCase("n"));
+
+                if (respuesta.equalsIgnoreCase("y")){
+                    aleatorio.writeShort(numDepartamento);
+                    aleatorio.skipBytes(60);
+                    aleatorio.writeShort(nuevoEmpleado);
+                } else {
+                    System.out.println("Operación cancelada");
+                }
+            }catch (IOException e) {
+                System.out.println("Se ha alcanzado el extremo del fichero.");
+            }
+        } else {
+            System.out.println("No se puede editar un registro inexistente");
+        }
+    }
+
+    public void actualizaNombreLocalidad(int numDepartamento, String nombre, String localidad){
+        if(existeDepartamento(numDepartamento)){
+            long posicion = (numDepartamento - 1) * LONGITUD_REGISTRO;
+            try {
+                aleatorio.seek(posicion);
+                String Respuesta;
+                do {
+                    System.out.print("CONFIRMA LA OPERACIÓN DE EDICIÓN ( Y / N ) ");
+                    Respuesta =  Entrada.cadena().toLowerCase(Locale.ROOT);
+                }while (!Respuesta.equalsIgnoreCase("y")&&!Respuesta.equalsIgnoreCase("n"));
+
+                if (Respuesta.equalsIgnoreCase("y")){
+                    aleatorio.writeShort(numDepartamento);
+                    StringBuffer Nombrebuffer = new StringBuffer(nombre);
+                    Nombrebuffer.setLength(15);
+                    aleatorio.writeChars(Nombrebuffer.toString());
+                    StringBuffer Localidadbuffer = new StringBuffer(localidad);
+                    Localidadbuffer.setLength(15);
+                    aleatorio.writeChars(Localidadbuffer.toString());
+                } else {
+                    System.out.println("Operación cancelada");
+                }
+            }catch (IOException e) {
+                System.out.println("Se ha alcanzado el extremo del fichero.");
+            }
+        } else {
+            System.out.println("No se puede editar un registro inexistente");
+        }
+    }
+
+    public void estadisticas() {
+        try {
+            System.out.println("La longitud del fichero es: " + aleatorio.length());
+        }catch (IOException e){
+            System.out.println("ERROR ESTADISTICO");
+        }
+
+        long id = 1;
+        short numeroDepartamento;
+        int departamentosActivos = 0;
+        int departamentosInicializados = 0;
+        int departamentosEliminados = 0;
+        int totalEmpleados = 0;
+
+        do {
+            try {
+                long posicion = (id - 1) * LONGITUD_REGISTRO;
+                aleatorio.seek(posicion);
+                numeroDepartamento = aleatorio.readShort();
+                System.out.printf("%d | %d\n", numeroDepartamento,id);
+                if (numeroDepartamento > 0) {
+                    departamentosActivos++;
+                        aleatorio.seek(posicion);
+
+                        short idResultado = aleatorio.readShort();
+
+                        char[] nombre = new char[15];
+                        for (int i = 0; i < nombre.length; i++) {
+                            nombre[i] = aleatorio.readChar();
+                        }
+                        String nombreS = new String(nombre).trim();// Para esquipear bites
+
+                        char[] localidad = new char[15];
+                        for (int i = 0; i < localidad.length; i++) {
+                            localidad[i] = aleatorio.readChar();
+                        }
+                        String localidadS = new String(localidad).trim();// Para esquipear bites
+
+                        short empleados = aleatorio.readShort();
+                        System.out.println(empleados);
+                        totalEmpleados += empleados;
+
+
+                }
+
+                if (numeroDepartamento == -1){
+                    departamentosEliminados++;
+                }
+
+                if (numeroDepartamento == 0){
+                    departamentosInicializados++;
+                }
+            } catch (FileNotFoundException e) {
+                System.out.println("El fichero no ha sido encontrado.");
+            } catch (IllegalArgumentException e) {
+                System.out.println("El modo de lectura escritura del fichero no es correcto.");
+            } catch (IOException e) {
+                System.out.println("Se ha producido un error de E/S en el fichero o la posición indicada no es la correcta. (Estadistico) ");
+            }
+            id++;
+        } while (existeDepartamento(id));
+        System.out.printf("Posiciones activas: %d \nPosiciones Inicializadas: %d \nPosiciones Eliminadas: %d \n",departamentosActivos,departamentosInicializados, departamentosEliminados);
+        double porcentaje = ((double) departamentosActivos / (departamentosEliminados + departamentosInicializados)) * 100 ;
+        System.out.println("Ratio de ocupación: " + porcentaje + "%");
+        System.out.println("El total de empleados activos son: " + totalEmpleados);
+    }
 }
+
+
