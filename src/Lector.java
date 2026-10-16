@@ -32,7 +32,7 @@ public class Lector {
     public void menu() {
         String cabecera = "--------------MENU DE ACCESO ALEATORIO----------------------";
 
-        System.out.printf("%s\n1- Aañdir un departamento \n2- Eliminar un departamento \n3- Actualizar un departamento \n4- Buscar un departamento \n5- Mostrar todos los departamentos \n6- Exit \n", cabecera);
+        System.out.printf("%s\n1- Añadir un departamento \n2- Eliminar un departamento \n3- Actualizar un departamento \n4- Buscar un departamento \n5- Mostrar todos los departamentos \n6- Exit \n", cabecera);
         System.out.println("--------------ESCRIBE TU ELECCIÓN----------------------");
         int respuesta = Entrada.entero();
         if (respuesta < 0 || respuesta > 6) {
@@ -55,7 +55,7 @@ public class Lector {
                 nombre = Entrada.cadena();
                 System.out.print("\nCual es la localidad del departamento?: ");
                 localidad = Entrada.cadena();
-                System.out.print("\n Cual es el numero de empleados del departamento?: ");
+                System.out.print("\nCual es el numero de empleados del departamento?: ");
                 empleados = (short) Entrada.entero();
                 insertaDepartamento(id,nombre,localidad,empleados);
                 break;
@@ -176,13 +176,13 @@ public class Lector {
 
                     }
 
-                    if (numeroDepartamento > -1){
+                    if (numeroDepartamento < -1){
                         resultado = false;
                         System.out.println("Valores de negativo inferiores a -1");
 
                     }
 
-                    if (numeroDepartamento == -1){
+                    if (numeroDepartamento == 0){
                         aleatorio.seek(posicion);
 
                         char[] nombre = new char[15];
@@ -191,7 +191,7 @@ public class Lector {
                         }
                         String nombreS = new String(nombre).trim();// Para esquipear bites
 
-                        if (!nombreS.equals("---------------")){
+                        if (!nombreS.contains("--------------")){
                             resultado = false;
                             System.out.println("Formato incorrecto en nombre vacio");
                         }
@@ -210,7 +210,7 @@ public class Lector {
                         short empleados = aleatorio.readShort();
                     }
 
-                    if (numeroDepartamento == 0){
+                    if (numeroDepartamento == -1){
 
                         aleatorio.seek(posicion);
 
@@ -275,7 +275,7 @@ public class Lector {
                 aleatorio.writeChars(localidades.toString());
                 aleatorio.writeShort(empleados);
                 short i = 1;
-                String NOMBRE = "---------------";
+                String NOMBRE = "----------------";
                 String LOCALIDAD = "---------------";
                 short EMPLEADOS = 0;
                 do {
