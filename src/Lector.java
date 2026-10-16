@@ -184,7 +184,7 @@ public class Lector {
 
                     if (numeroDepartamento == 0){
                         aleatorio.seek(posicion);
-
+                        short idResultado = aleatorio.readShort();
                         char[] nombre = new char[15];
                         for (int i = 0; i < nombre.length; i++) {
                             nombre[i] = aleatorio.readChar();
@@ -211,18 +211,19 @@ public class Lector {
                     }
 
                     if (numeroDepartamento == -1){
-
                         aleatorio.seek(posicion);
 
+                        short idResultado = aleatorio.readShort();
                         char[] nombre = new char[15];
                         for (int i = 0; i < nombre.length; i++) {
                             nombre[i] = aleatorio.readChar();
                         }
-                        String nombreS = new String(nombre).trim();// Para esquipear bites
+                        String nombreS = new String(nombre).trim();// convierto a String el array
+                        System.out.println(nombreS);
 
-                        if (!nombreS.equals("***************")){
+                        if (!nombreS.contains("***************")){
                             resultado = false;
-                            System.out.println("Formato incorrecto en nombre borrada");
+                            System.out.println("Formato incorrecto en nombre borrado");
                         }
 
                         char[] localidad = new char[15];
@@ -318,6 +319,7 @@ public class Lector {
                     nombre[i] = aleatorio.readChar();
                 }
                 String nombreS = new String(nombre).trim();// convierto a String el array
+                System.out.println(nombreS);
 
                 char[] localidad = new char[15];
                 for (int i = 0; i < localidad.length; i++) {
@@ -371,6 +373,7 @@ public class Lector {
                     StringBuffer nombres = new StringBuffer("***************");
                     nombres.setLength(15);
                     aleatorio.writeChars(nombres.toString());
+                    System.out.println(nombres);
                     StringBuffer localidades = new StringBuffer("***************");
                     localidades.setLength(15);
                     aleatorio.writeChars(localidades.toString());
@@ -459,12 +462,9 @@ public class Lector {
                 long posicion = (id - 1) * LONGITUD_REGISTRO;
                 aleatorio.seek(posicion);
                 numeroDepartamento = aleatorio.readShort();
-                System.out.printf("%d | %d\n", numeroDepartamento,id);
                 if (numeroDepartamento > 0) {
                     departamentosActivos++;
                         aleatorio.seek(posicion);
-
-                        short idResultado = aleatorio.readShort();
 
                         char[] nombre = new char[15];
                         for (int i = 0; i < nombre.length; i++) {
